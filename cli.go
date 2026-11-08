@@ -438,6 +438,7 @@ func cmdChat(room string) error {
 		return err
 	}
 	_, _ = cl.send(Request{Cmd: "read", Room: string(roomID)})
+	_, _ = cl.send(Request{Cmd: "focus", Room: string(roomID)})
 	fmt.Println("— Entrée pour envoyer, Ctrl+D pour quitter —")
 
 	go func() {

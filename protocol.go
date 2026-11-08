@@ -22,6 +22,9 @@ import (
 //   send     room body          send a text message (encrypted if the room is)
 //   read     room               mark the room as read up to its last message
 //   verify   recovery_key       verify this device and restore the key backup
+//   focus    [room]             this client shows that room now (none: no room);
+//                               no desktop notification for it until it changes
+//                               or the client disconnects
 //   subscribe                   start receiving events
 //
 // "room" is a room ID, an alias, or (part of) a room's name.

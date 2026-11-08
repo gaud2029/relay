@@ -32,6 +32,7 @@ type Daemon struct {
 	notify bool
 
 	mu       sync.Mutex
+	conns    map[*conn]struct{}
 	subs     map[*conn]struct{}
 	synced   bool
 	verified bool
@@ -40,6 +41,8 @@ type Daemon struct {
 type conn struct {
 	c  net.Conn
 	mu sync.Mutex
+	// The room this client shows right now (see "focus"), under Daemon.mu.
+	focus id.RoomID
 }
 
 func (c *conn) write(v any) error {
@@ -67,7 +70,7 @@ func runDaemon(notify bool, debug bool) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	d := &Daemon{rooms: loadRooms(), log: log, notify: notify, subs: map[*conn]struct{}{}}
+	d := &Daemon{rooms: loadRooms(), log: log, notify: notify, subs: map[*conn]struct{}{}, conns: map[*conn]struct{}{}}
 	ln, err := listen()
 	if err != nil {
 		return err
@@ -262,8 +265,20 @@ func (d *Daemon) undecryptable(ctx context.Context, evt *event.Event) Message {
 	}
 }
 
+// shown reports whether a connected client has this room on screen.
+func (d *Daemon) shown(roomID id.RoomID) bool {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	for c := range d.conns {
+		if c.focus == roomID {
+			return true
+		}
+	}
+	return false
+}
+
 func (d *Daemon) notifyDesktop(m Message) {
-	if !d.notify || m.Own || m.Edit {
+	if !d.notify || m.Own || m.Edit || d.shown(m.Room) {
 		return
 	}
 	title := m.SenderName
@@ -427,6 +442,14 @@ func (d *Daemon) serve(ln net.Listener) {
 }
 
 func (d *Daemon) handleConn(c *conn) {
+	d.mu.Lock()
+	d.conns[c] = struct{}{}
+	d.mu.Unlock()
+	defer func() {
+		d.mu.Lock()
+		delete(d.conns, c)
+		d.mu.Unlock()
+	}()
 	defer c.c.Close()
 	defer d.unsubscribe(c)
 	sc := bufio.NewScanner(c.c)
@@ -456,6 +479,18 @@ func (d *Daemon) handle(ctx context.Context, c *conn, req *Request) (any, error)
 		return d.status(ctx), nil
 	case "rooms":
 		return d.roomList(ctx), nil
+	case "focus":
+		var roomID id.RoomID
+		if req.Room != "" {
+			var err error
+			if roomID, err = d.resolveRoom(ctx, req.Room); err != nil {
+				return nil, err
+			}
+		}
+		d.mu.Lock()
+		c.focus = roomID
+		d.mu.Unlock()
+		return nil, nil
 	case "subscribe":
 		d.mu.Lock()
 		d.subs[c] = struct{}{}
