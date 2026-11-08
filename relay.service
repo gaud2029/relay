@@ -1,0 +1,12 @@
+[Unit]
+Description=relay, client Matrix (démon)
+After=network-online.target graphical-session.target
+Wants=network-online.target
+
+[Service]
+ExecStart=%h/.local/bin/relay daemon --notify
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target
