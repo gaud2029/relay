@@ -1,41 +1,42 @@
 # relay
 
-Un client Matrix minimal, chiffrement de bout en bout compris : un démon
-qui garde la session synchronisée, et une ligne de commande (ou n'importe
-quelle interface, comme la barre muthur) qui lui parle sur un socket Unix.
+A minimal Matrix client, end-to-end encryption included: a daemon that
+keeps the session in sync, and a command line (or any interface, such as
+the muthur bar) that talks to it over a Unix socket.
 
-Construit sur [mautrix-go](https://github.com/mautrix/go), avec son
-implémentation d'Olm/Megolm en Go pur (`-tags goolm`) : pas de libolm.
+Built on [mautrix-go](https://github.com/mautrix/go), with its pure-Go
+Olm/Megolm implementation (`-tags goolm`): no libolm needed.
 
-## Installation
+## Install
 
-    make install                 # ~/.local/bin/relay + service systemd utilisateur
-    relay login                  # connexion par le navigateur, puis clé de récupération
+Needs Go.
+
+    make install                 # ~/.local/bin/relay + a systemd user service
+    relay login                  # log in through the browser, then the recovery key
     systemctl --user enable --now relay
 
-## Utilisation
+## Usage
 
-    relay status                 # compte, vérification, synchro
-    relay rooms                  # salons, les plus récents d'abord
-    relay chat alice             # conversation (nom partiel accepté)
-    relay send "Mon salon" salut
-    relay tail                   # tout ce qui arrive
-    relay --json tail            # le même flux, en JSON
+    relay status                 # account, verification, sync
+    relay rooms                  # rooms, most recent first
+    relay chat alice             # a conversation (part of a name is enough)
+    relay send "My room" hello
+    relay tail                   # everything that comes in
+    relay --json tail            # the same stream, as JSON
 
-## Vérification
+## Verification
 
-`relay login` ouvre la page de connexion du serveur dans le navigateur
-(Google, GitHub… comme dans Element ; `relay login --password` pour un
-compte à mot de passe), puis demande la clé de récupération d'Element
-(Paramètres > Sécurité). Avec elle, relay signe sa session (les autres appareils lui
-font confiance et lui envoient les clés des nouveaux messages) et restaure
-la sauvegarde des clés (l'historique se déchiffre). Plus tard :
-`relay verify`.
+`relay login` opens the homeserver's login page in the browser (Google,
+GitHub… as in Element; `relay login --password` for an account with a
+password), then asks for Element's recovery key (Settings > Security).
+With it, relay signs its session (your other devices trust it and send it
+the keys of new messages) and restores the key backup (the history
+decrypts). Later on: `relay verify`.
 
-## Données
+## Data
 
-- `~/.local/share/relay/` : `session.json` (jeton d'accès), `relay.db`
-  (clés de chiffrement, chiffrées au repos), `rooms.json` (noms des salons,
-  compteurs). Aucun message n'est écrit sur le disque.
-- `$XDG_RUNTIME_DIR/relay.sock` : le socket, JSON une ligne par message.
-  Le protocole est décrit dans `protocol.go`.
+- `~/.local/share/relay/`: `session.json` (access token), `relay.db`
+  (encryption keys, encrypted at rest), `rooms.json` (room names,
+  counters). No message is ever written to disk.
+- `$XDG_RUNTIME_DIR/relay.sock`: the socket, one JSON object per line.
+  The protocol is described in `protocol.go`.
