@@ -10,7 +10,7 @@ implémentation d'Olm/Megolm en Go pur (`-tags goolm`) : pas de libolm.
 ## Installation
 
     make install                 # ~/.local/bin/relay + service systemd utilisateur
-    relay login                  # identifiant, mot de passe, clé de récupération
+    relay login                  # connexion par le navigateur, puis clé de récupération
     systemctl --user enable --now relay
 
 ## Utilisation
@@ -24,8 +24,10 @@ implémentation d'Olm/Megolm en Go pur (`-tags goolm`) : pas de libolm.
 
 ## Vérification
 
-`relay login` demande la clé de récupération d'Element (Paramètres >
-Sécurité). Avec elle, relay signe sa session (les autres appareils lui
+`relay login` ouvre la page de connexion du serveur dans le navigateur
+(Google, GitHub… comme dans Element ; `relay login --password` pour un
+compte à mot de passe), puis demande la clé de récupération d'Element
+(Paramètres > Sécurité). Avec elle, relay signe sa session (les autres appareils lui
 font confiance et lui envoient les clés des nouveaux messages) et restaure
 la sauvegarde des clés (l'historique se déchiffre). Plus tard :
 `relay verify`.
